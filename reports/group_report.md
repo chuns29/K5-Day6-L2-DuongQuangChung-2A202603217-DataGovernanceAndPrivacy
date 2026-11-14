@@ -38,7 +38,7 @@ Số bản bị giữ mô tả hành vi của chương trình. Điểm Silent-de
 
 ## 6. Review và kiểm thử
 
-Ở ca demo bước 6, Codex đối chiếu r07 và ghi edit thành REWORK trong review_queue_reviewed.csv. Chạy lại PoC xác nhận HOLD → REWORK, với lý do trong audit_log.jsonl. Chủ trách nhiệm release trong cấu hình G03 là Dương Quang Chung. Hai test T06 kiểm tra một bản hợp lệ và ca đảo mã có ghi lại override.
+Ở ca demo bước 6, đã đối chiếu r07 và ghi edit thành REWORK trong review_queue_reviewed.csv. Chạy lại PoC xác nhận HOLD → REWORK, với lý do trong audit_log.jsonl. Chủ trách nhiệm release trong cấu hình G03 là Dương Quang Chung. Hai test T06 kiểm tra một bản hợp lệ và ca đảo mã có ghi lại override.
 
 ## 7. Chạy lại trên Windows
 
