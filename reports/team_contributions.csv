@@ -1,6 +1,2 @@
 member,git_author_name,git_email,role,modules_files,commit_shas,evidence_note,presenter
-Member 1,,,Lead / Integrator,src/main.py; configs/,,,
-Member 2,,,Data & fixtures,fixtures/; tools/,,,
-Member 3,,,Core algorithm,src/pipeline.py,,,
-Member 4,,,QA / metric,tests/; reports/metrics_*.json,,,
-Member 5,,,Human review + report,reports/group_report.md; demo/,,,
+Dương Quang Chung,Dương Quang Chung,chung.dq225266@sis.hust.edu.vn,Thực hiện cá nhân,configs/lab.yaml; src/examples/t06_baseline.py; src/pipeline.py; tests/test_t06_pipeline.py; reports/,965ba5535ea19ae26a84f969572cca39f0323804,"Có hỗ trợ Codex triển khai, kiểm thử và chạy demo review.",Dự kiến

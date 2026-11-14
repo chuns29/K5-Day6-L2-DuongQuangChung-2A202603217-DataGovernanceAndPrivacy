@@ -1,133 +1,67 @@
-# Group Report — Day 06 Data Lab (Field-to-Release PoC)
+# Báo cáo Day 6 · G03 · T06 Dataset Semantic Integrity & Provenance Gate
 
-> Điền đầy đủ, cụ thể, không viết chung chung. Mọi con số phải lấy từ file do script sinh ra
-> (`reports/metrics_*.json`, `reports/table1_baseline_vs_poc.md`) — không gõ tay, không làm tròn mất đơn vị.
-> 3–5 trang (hoặc README + report.md tương đương).
+- Học viên thực hiện cá nhân: Dương Quang Chung.
+- Repo: https://github.com/chuns29/K5-Day6-L2-DuongQuangChung-2A202603217-DataGovernanceAndPrivacy
+- HEAD của lần chạy: b0ce8bf. Các thay đổi của bài làm đang ở working tree tại thời điểm lập báo cáo.
+- Mốc demo và nộp cuối: sẽ gắn tag khi chốt từng bản.
 
-## 00 · Header
+## 1. Bài toán
 
-| Mục | Giá trị |
-|---|---|
-| Group ID | G__ |
-| Challenge | T__ · ______________________ |
-| Thành viên (5–6) + vai trò | 1. ____ (Lead/Integrator) · 2. ____ (Data & fixtures) · 3. ____ (Core algorithm) · 4. ____ (QA/metric) · 5. ____ (Review + report) · 6. ____ |
-| Git URL | ____ |
-| Tag `demo-180m` (commit) | ____ |
-| Tag `final-24h` (commit) | ____ |
-| Deadline (giờ VN) | ____ |
+Mỗi bản ứng viên chứa danh sách ảnh, nhãn vật thể, bảng mã lớp và metadata. Một file JSON đọc được vẫn có thể đổi ý nghĩa mã lớp, dịch khung bao hoặc làm mất frame. Những lỗi này có thể đưa nhãn sai vào tập huấn luyện. Gate ra một quyết định cho từng bản ứng viên trước khi phát hành. PASS nghĩa là qua các kiểm tra đã cấu hình. HOLD đưa bản có dấu hiệu lỗi vào diện xem xét. Sau khi xem bằng chứng, người duyệt có thể chọn REWORK để yêu cầu sửa.
 
-## 01 · Problem statement
+## 2. Dữ liệu và nguồn gốc
 
-- Ai bị ảnh hưởng / ai chịu hậu quả khi hệ thống sai? ____
-- Điểm nghẽn cụ thể: ____
-- Đầu vào → đầu ra: ____
-- Tiêu chí GO / HOLD / REWORK (chốt trước khi chạy eval): ____
-- Giả định của nhóm (cần DPO/legal/domain owner xác nhận): ____
+Dữ liệu mô phỏng từ fixtures/t06_release_gate, giấy phép trong manifest là CC0-1.0 (synthetic, generated for AI20K Day06). Có 20 ứng viên, chia 10 dev và 10 eval theo releases.csv. Bản cha là releases/v1.0. Nhãn COCO dùng category_id và bbox dạng [x, y, w, h]. PoC xác minh SHA-256 của manifest đầu vào và đối chiếu parent_version, parent_sha256 do từng ứng viên khai. Cả hai lượt chạy dùng seed 42 và chạy offline bằng Python 3.12.16 trên Windows.
 
-## 02 · Data & provenance
+## 3. Cách làm
 
-| Split | N | Nguồn / link | License | Synthetic? |
-|---|---|---|---|---|
-| dev | | | | |
-| eval / heldout | | | | |
+Baseline thử đọc JSON, kiểm cấu trúc và kiểm file ảnh có tồn tại. PoC bổ sung kiểm tra ID trùng, frame thiếu, phiên bản và ý nghĩa mã lớp, khung bao vượt biên và chênh lệch tọa độ với bản cha. Khung ghép theo ID nhãn và ID ảnh, ngưỡng mặc định 5 px. Không có model hoặc weights. So sánh theo ID giúp giải thích bằng chứng nhưng giả định ID được giữ ổn định giữa các bản. Một chỉnh sửa nhãn có chủ đích hoặc dịch khung lớn hợp lệ vẫn có thể cần người duyệt xác nhận.
 
-- Schema & class mapping: ____
-- Seed: 42 · Cách chia split (theo scene/group/segment?): ____
-- `manifest.csv` verified (sha256): có / không — lệnh: `python -m tools.verify_manifests`
-- Dữ liệu thật dùng (nếu có) và cách xây GT cho nó: ____
+Luồng chạy: manifest và ứng viên → kiểm tra → xếp thứ tự theo số nhóm lỗi → review tùy chọn → quyết định và báo cáo. PoC xuất hàng chờ với B=20. Bảng dưới dùng quyết định tự động trước review, với ngân sách can thiệp bằng 0 cho cả hai lượt.
 
-## 03 · Research & design
+## 4. So sánh baseline và PoC
 
-- 2–3 references (URL + ngày xem) và **vì sao** chọn kỹ thuật: ____
-- Sơ đồ data flow (input → process → rank/QC → review → decision → report): ____
-- Thành phần offline (model/weights + checksum + license nếu có): ____
-- Trade-offs đã cân nhắc: ____
+| Tập | N | Baseline PASS | Baseline giữ | PoC PASS | PoC giữ |
+|---|---:|---:|---:|---:|---:|
+| Toàn bộ | 20 | 20 | 0 | 10 | 10 |
+| dev | 10 | 10 | 0 | 3 | 7 |
+| eval | 10 | 10 | 0 | 7 | 3 |
 
-## 04 · Baseline vs PoC
+Runtime toàn lượt trên máy chạy là 0.3986 giây cho baseline và 1.0574 giây cho PoC. Thời gian PoC gồm xác minh manifest và xuất trang review. Đây là một lần đo.
 
-- Baseline (mô tả, version/config, commit): ____
-- PoC (mô tả, version/config, commit): ____
-- Cùng budget / cùng heldout / cùng seed: xác nhận ____
+Số bản bị giữ mô tả hành vi của chương trình. Điểm Silent-defect Detection F1, recall, tỷ lệ chặn nhầm và độ chính xác nguyên nhân đang chờ gt_releases.csv của giảng viên. Chấm trên split eval theo metric_contract.md. Không sử dụng các quyết định của PoC làm nhãn đáp án.
 
-**Bảng 1 · Baseline vs PoC & hard slices** — dán output của
-`python -m src.compare reports/metrics_baseline.json reports/metrics_poc.json`:
+## 5. Đối chiếu thủ công trên dev
 
-| Metric (unit) | Baseline | PoC | Δ & chú thích |
-|---|---|---|---|
-| Primary: ______ | ____ | ____ | ____; higher/lower? |
-| Hard-slice: ______ | ____ | ____ | ____; N=__ |
-| Review@B / miss / FP | ____ | ____ | ____; B=__ |
-| Runtime / 100 items | ____ | ____ | ____; CPU=__ |
+- r07 có JSON hợp lệ. So bảng categories với v1.0 cho thấy mã 1 đổi từ car sang pedestrian, mã 2 đổi từ pedestrian sang car. Baseline PASS, PoC HOLD với class_swap.
+- r02 thiếu 9 ID ảnh có trong danh sách images của v1.0. Baseline PASS vì các file được tham chiếu vẫn tồn tại. PoC HOLD với dropped_frames. Các ID thiếu được lưu trong rework_report.json.
 
-## 05 · Evaluation protocol
+## 6. Review và kiểm thử
 
-- Công thức primary metric, đơn vị đánh giá, TP/FP/FN, denominator: ____ (xem `reports/metric_contract.md`)
-- Threshold / budget B / K và lúc chốt: ____
-- Độ bất định (CI/bootstrap/variance) khi N nhỏ: ____
-- Lệnh evaluate chính xác: `python -m src.evaluate --track t__ --pred ... --out ...`
+Ở ca demo bước 6, Codex đối chiếu r07 và ghi edit thành REWORK trong review_queue_reviewed.csv. Chạy lại PoC xác nhận HOLD → REWORK, với lý do trong audit_log.jsonl. Chủ trách nhiệm release trong cấu hình G03 là Dương Quang Chung. Hai test T06 kiểm tra một bản hợp lệ và ca đảo mã có ghi lại override.
 
-## 06 · Result slices
+## 7. Chạy lại trên Windows
 
-| Slice | N | Baseline | PoC | Ghi chú |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
+~~~powershell
+.\.venv\Scripts\python.exe -m src.main --track t06 --pipeline src.examples.t06_baseline --output out/baseline_t06 --run-name baseline --offline --seed 42
+.\.venv\Scripts\python.exe -m src.main --track t06 --output out/poc --run-name poc --offline --seed 42
+.\.venv\Scripts\python.exe -m pytest -q
+# Khi có đáp án chính thức
+.\.venv\Scripts\python.exe -m src.evaluate --track t06 --pred out/baseline_t06/release_decisions.csv --run-name baseline --out reports/metrics_baseline.json
+.\.venv\Scripts\python.exe -m src.evaluate --track t06 --pred out/poc/release_decisions.csv --run-name poc --out reports/metrics_poc.json
+.\.venv\Scripts\python.exe -m src.compare reports/metrics_baseline.json reports/metrics_poc.json --out reports/table1_baseline_vs_poc.md
+~~~
 
-- Failure case 1 (ảnh/metadata + root cause): ____
-- Failure case 2: ____
-- Latency / compute (máy, CPU, ms/item): ____
+Dùng thư mục PoC mới hoặc trống khi đo tự động để tránh áp lại một file review từ lượt demo.
 
-## 07 · Human & decision
+## 8. Giới hạn và đóng góp
 
-- Review queue (file, B, cách ưu tiên): ____
-- Cách override + audit log (`out/audit_log.jsonl`): ____
-- Decision policy + `reason_code` + owner: ____
-- Khi nào HOLD/REWORK thay vì tự động release: ____
+Chưa đo F1 hoặc khoảng tin cậy trên eval. Có thể báo bootstrap theo release sau khi có GT và nêu rõ độ bất định của tập nhỏ. Kiểm thử chuyển đổi qua lại COCO–YOLO và rollback vẫn thuộc mốc hoàn thiện. Thí nghiệm sử dụng dữ liệu mô phỏng và chỉ kiểm tra chất lượng kỹ thuật. Với dữ liệu thật, quyền sử dụng và phát hành cần được người phụ trách xác nhận.
 
-## 08 · Reproduce & tests
+G03 thực hiện cá nhân. Chi tiết vai trò và file nằm trong team_contributions.csv. Commit triển khai và kiểm thử là `965ba5535ea1`.
 
-```bash
-make setup          # hoặc: python -m venv .venv && pip install -r requirements.txt
-python -m src.main --input fixtures/<track> --config configs/lab.yaml --output out/ --offline --seed 42
-python -m src.evaluate --track t__ --pred out/<file> --out reports/metrics_poc.json
-pytest -q
-```
+## 9. Tài liệu trong repo
 
-- Output của `pytest -q`: ____
-- Máy / CPU / OS / Python: ____ · git sha: ____
-
-## 09 · Limitations & ethics
-
-- Rủi ro pháp lý / PII / license: ____
-- Điều chưa biết; false alarms; nếu scale 10× thì sao: ____
-- Không tuyên bố "đạt GDPR / luật Việt Nam" từ checklist tự động; giả định cần DPO/legal xác nhận: ____
-- Kế hoạch cải tiến: ____
-
-## 10 · Team contribution
-
-**Bảng 2 · Individual contribution evidence** (đối chiếu với `git shortlog -sne --all` và `reports/team_contributions.csv`)
-
-| Học viên | Git author/email | Module / vai trò | Commit SHA / diff chứng minh | Trình bày? |
-|---|---|---|---|---|
-| Member 1 | | Integration / CLI | | |
-| Member 2 | | Data + GT | | |
-| Member 3 | | Core algorithm | | |
-| Member 4 | | Metric + tests | | |
-| Member 5 | | Review queue + report | | |
-| Member 6 (nếu có) | | Research / ablation / debate | | |
-
-## 11 · References
-
-| URL | Ngày xem | 1–2 dòng ý nghĩa (không chép nguyên văn) |
-|---|---|---|
-| | | |
-
----
-
-**Bảng 3 · Checklist chốt khi nộp**
-
-- [ ] Link repo và tag cuối cùng trong README; input mẫu không chứa PII thật.
-- [ ] Đúng 1 lệnh run, 1 lệnh evaluate, 1 lệnh tests; không cần download khi chạy.
-- [ ] Có baseline/PoC metrics, ≥1 failure case, reviewer evidence, decision log.
-- [ ] Có license/source provenance, data splits, seed, offline environment, GT/eval N.
-- [ ] Mỗi thành viên có ≥1 commit thực chất và được nêu minh bạch trong bảng trên.
+- docs/tracks/T06.md mô tả dạng lỗi, baseline và yêu cầu đánh giá.
+- src/metrics/tracks.py chứa evaluator, phép ghép release_id và định nghĩa các metric.
+- src/common/review.py quy định định dạng phiếu review và cách ghi override.
